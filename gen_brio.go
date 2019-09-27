@@ -13,6 +13,15 @@ func (o *Mission) MarshalBinary() (data []byte, err error) {
 	binary.LittleEndian.PutUint32(buf[:4], uint32(o.ID))
 	data = append(data, buf[:4]...)
 	{
+		sub, err := o.Date.MarshalBinary()
+		if err != nil {
+			return nil, err
+		}
+		binary.LittleEndian.PutUint64(buf[:8], uint64(len(sub)))
+		data = append(data, buf[:8]...)
+		data = append(data, sub...)
+	}
+	{
 		sub, err := o.Start.MarshalBinary()
 		if err != nil {
 			return nil, err
@@ -43,6 +52,15 @@ func (o *Mission) UnmarshalBinary(data []byte) (err error) {
 	{
 		n := int(binary.LittleEndian.Uint64(data[:8]))
 		data = data[8:]
+		err = o.Date.UnmarshalBinary(data[:n])
+		if err != nil {
+			return err
+		}
+		data = data[n:]
+	}
+	{
+		n := int(binary.LittleEndian.Uint64(data[:8]))
+		data = data[8:]
 		err = o.Start.UnmarshalBinary(data[:n])
 		if err != nil {
 			return err
@@ -68,27 +86,27 @@ func (o *Mission) UnmarshalBinary(data []byte) (err error) {
 // MarshalBinary implements encoding.BinaryMarshaler
 func (o *Location) MarshalBinary() (data []byte, err error) {
 	var buf [8]byte
+	binary.LittleEndian.PutUint64(buf[:8], uint64(len(o.Name)))
+	data = append(data, buf[:8]...)
+	data = append(data, []byte(o.Name)...)
 	binary.LittleEndian.PutUint64(buf[:8], math.Float64bits(o.Lat))
 	data = append(data, buf[:8]...)
 	binary.LittleEndian.PutUint64(buf[:8], math.Float64bits(o.Lng))
 	data = append(data, buf[:8]...)
-	binary.LittleEndian.PutUint64(buf[:8], uint64(len(o.Name)))
-	data = append(data, buf[:8]...)
-	data = append(data, []byte(o.Name)...)
 	return data, err
 }
 
 // UnmarshalBinary implements encoding.BinaryUnmarshaler
 func (o *Location) UnmarshalBinary(data []byte) (err error) {
-	o.Lat = math.Float64frombits(binary.LittleEndian.Uint64(data[:8]))
-	data = data[8:]
-	o.Lng = math.Float64frombits(binary.LittleEndian.Uint64(data[:8]))
-	data = data[8:]
 	{
 		n := int(binary.LittleEndian.Uint64(data[:8]))
 		data = data[8:]
 		o.Name = string(data[:n])
 		data = data[n:]
 	}
+	o.Lat = math.Float64frombits(binary.LittleEndian.Uint64(data[:8]))
+	data = data[8:]
+	o.Lng = math.Float64frombits(binary.LittleEndian.Uint64(data[:8]))
+	data = data[8:]
 	return err
 }

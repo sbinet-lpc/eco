@@ -8,6 +8,7 @@ package eco // import "github.com/sbinet-lpc/eco"
 
 import (
 	"fmt"
+	"time"
 
 	"golang.org/x/xerrors"
 )
@@ -15,15 +16,18 @@ import (
 type Mission struct {
 	ID int32 `json:"id"`
 
-	Start Location `json:"start"`
-	Dest  Location `json:"dest"`
-	Dist  float64  `json:"dist"`
-	Trans TransID  `json:"transport_id"`
+	Date  time.Time `json:"date"`
+	Start Location  `json:"start"`
+	Dest  Location  `json:"dest"`
+	Dist  float64   `json:"dist"`
+	Trans TransID   `json:"transport_id"`
 }
 
 func (m Mission) String() string {
-	return fmt.Sprintf("eco.Mission{id=%v dest=%q dist=%vkm trans=%v}",
-		m.ID, m.Dest.Name, int64(m.Dist)/1000, m.Trans,
+	return fmt.Sprintf("eco.Mission{id=%v %v dest=%q dist=%vkm trans=%v}",
+		m.ID,
+		m.Date.Format("2006-01-02"),
+		m.Dest.Name, int64(m.Dist)/1000, m.Trans,
 	)
 }
 

@@ -47,7 +47,11 @@ func main() {
 		log.Fatalf("could not decode JSON stats: %+v", err)
 	}
 
-	log.Printf("missions: %d", stats.Missions)
+	log.Printf("missions:    %d", stats.Missions)
+	log.Printf("time period: %v -> %s",
+		stats.Start.Format("2006-01-02"),
+		stats.Stop.Format("2006-01-02"),
+	)
 
 	type entry struct {
 		name  string

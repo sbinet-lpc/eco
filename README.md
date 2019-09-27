@@ -4,7 +4,7 @@
 
 `eco` consists of 3 parts:
 
-- `cmd/eco-ingest`: a command that loads LPC travel (internal) database, analyzes travel missions and uploads cleaned up data to
+- `cmd/eco-ingest`: a command that loads LPC travel (internal) database, analyzes travel missions and uploads cleaned up data to `eco-srv
 - `cmd/eco-srv`: a HTTP server that computes statistical data from the cleaned up travel missions
 - `cmd/eco-stats`: a simple command that queries `eco-srv` and dumps statistical data on screen.
 
