@@ -76,7 +76,7 @@ func (o *Mission) UnmarshalBinary(data []byte) (err error) {
 		}
 		data = data[n:]
 	}
-	o.Dist = math.Float64frombits(binary.LittleEndian.Uint64(data[:8]))
+	o.Dist = float64(math.Float64frombits(binary.LittleEndian.Uint64(data[:8])))
 	data = data[8:]
 	o.Trans = TransID(data[0])
 	data = data[1:]
@@ -104,9 +104,9 @@ func (o *Location) UnmarshalBinary(data []byte) (err error) {
 		o.Name = string(data[:n])
 		data = data[n:]
 	}
-	o.Lat = math.Float64frombits(binary.LittleEndian.Uint64(data[:8]))
+	o.Lat = float64(math.Float64frombits(binary.LittleEndian.Uint64(data[:8])))
 	data = data[8:]
-	o.Lng = math.Float64frombits(binary.LittleEndian.Uint64(data[:8]))
+	o.Lng = float64(math.Float64frombits(binary.LittleEndian.Uint64(data[:8])))
 	data = data[8:]
 	return err
 }
