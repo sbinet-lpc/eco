@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"sort"
+	"time"
 
 	"github.com/sbinet-lpc/eco"
 	"go-hep.org/x/hep/hplot"
@@ -93,8 +94,12 @@ func makeTIDPlot(tid eco.TransID, ms []eco.Mission) *hplot.Plot {
 	})
 
 	data := make([]eco.Mission, 0, len(ms))
+	now := time.Now().UTC()
 	for _, m := range ms {
 		if m.Trans != tid {
+			continue
+		}
+		if m.Date.After(now) {
 			continue
 		}
 		data = append(data, m)
