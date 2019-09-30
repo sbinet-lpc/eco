@@ -76,7 +76,7 @@ func (srv *server) plotCO2(w http.ResponseWriter, r *http.Request) {
 func makeTIDPlot(tid eco.TransID, ms []eco.Mission) *hplot.Plot {
 	p := hplot.New()
 	p.Title.Text = fmt.Sprintf("Transport -- %s", tid)
-	p.Y.Label.Text = "Cumulative distance [1000km]"
+	p.Y.Label.Text = "Cumulative distance [km]"
 
 	// xticks defines how we convert and display time.Time values.
 	xticks := plot.TimeTicks{Format: "2006-01-02"}
