@@ -71,6 +71,17 @@ func (tid TransID) String() string {
 	panic(xerrors.Errorf("unknown transport ID %d", int(tid)))
 }
 
+// List of all known TransIDs
+var TransIDs = []TransID{
+	Bike,
+	Tramway,
+	Train,
+	Bus,
+	Passenger,
+	Car,
+	Plane,
+}
+
 // CostLess returns whether a is costing less than b in terms of CO2.
 func CostLess(a, b TransID) bool {
 	if a < b {

@@ -90,24 +90,14 @@ func main() {
 		}
 	}
 
-	tids := []eco.TransID{
-		eco.Bike,
-		eco.Tramway,
-		eco.Train,
-		eco.Bus,
-		eco.Passenger,
-		eco.Car,
-		eco.Plane,
-	}
-
 	log.Printf("=== transport ===")
-	for _, k := range tids {
+	for _, k := range eco.TransIDs {
 		v := stats.TransIDs[k]
 		log.Printf("%-10s %d", k, v)
 	}
 
 	log.Printf("=== distances ===")
-	for _, k := range tids {
+	for _, k := range eco.TransIDs {
 		v := stats.Dists[k]
 		log.Printf("%-10s %d km", k, v)
 	}

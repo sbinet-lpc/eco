@@ -10,7 +10,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
+	"text/template"
 	"time"
 
 	"github.com/sbinet-lpc/eco"
@@ -98,6 +100,23 @@ func (srv *server) Close() error {
 }
 
 func (srv *server) rootHandle(w http.ResponseWriter, r *http.Request) {
+	stats, err := srv.stats()
+	if err != nil {
+		err = xerrors.Errorf("could not compute eco stats: %w", err)
+		log.Printf("%+v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = rootTmpl.Execute(w, map[string]interface{}{
+		"Stats": stats,
+	})
+	if err != nil {
+		err = xerrors.Errorf("could not execute html template: %w", err)
+		log.Printf("%+v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (srv *server) apiLastID(w http.ResponseWriter, r *http.Request) {
@@ -241,3 +260,126 @@ func (srv *server) apiUpdateDB(w http.ResponseWriter, r *http.Request) {
 		ms[len(ms)-1].ID,
 	)
 }
+
+func (srv *server) stats() (string, error) {
+	srv.mu.RLock()
+	defer srv.mu.RUnlock()
+
+	stats := eco.NewStats()
+	err := srv.db.View(func(tx *bbolt.Tx) error {
+		bkt := tx.Bucket(bucketEco)
+		if bkt == nil {
+			return xerrors.Errorf("could not find bucket %q", bucketEco)
+		}
+		return bkt.ForEach(func(k, v []byte) error {
+			var m eco.Mission
+			err := m.UnmarshalBinary(v)
+			if err != nil {
+				return xerrors.Errorf("could not unmarshal mission: %w", err)
+			}
+
+			stats.Add(m)
+
+			return nil
+		})
+	})
+	if err != nil {
+		return "", xerrors.Errorf("could not process missions: %w", err)
+	}
+
+	o := new(strings.Builder)
+	fmt.Fprintf(o, "\n<h3>Stats</h3>\n")
+	fmt.Fprintf(o, "\n<pre>\n")
+	fmt.Fprintf(o, "missions:    %d\n", stats.Missions)
+	fmt.Fprintf(o, "time period: %v -> %s\n",
+		stats.Start.Format("2006-01-02"),
+		stats.Stop.Format("2006-01-02"),
+	)
+	fmt.Fprintf(o, "\n</pre>\n")
+
+	//	type entry struct {
+	//		name  string
+	//		count int
+	//	}
+	//
+	//	sort := func(m map[string]int) []entry {
+	//		vs := make([]entry, 0, len(m))
+	//		for k := range m {
+	//			vs = append(vs, entry{k, m[k]})
+	//		}
+	//		sort.Slice(vs, func(i, j int) bool {
+	//			ii := vs[i]
+	//			jj := vs[j]
+	//			if ii.name == jj.name {
+	//				return ii.count < jj.count
+	//			}
+	//			return ii.name < jj.name
+	//		})
+	//		return vs
+	//	}
+	//
+	//	cities := sort(stats.Cities)
+	//	fmt.Fprintf(o, "=== cities ===\n")
+	//	for _, v := range cities {
+	//		fmt.Fprintf(o, "%-10s %d\n", v.name, v.count)
+	//	}
+	//
+	//	countries := sort(stats.Countries)
+	//	fmt.Fprintf(o, "=== countries ===\n")
+	//	for _, v := range countries {
+	//		fmt.Fprintf(o, "%-10s %d\n", v.name, v.count)
+	//	}
+
+	tids := []eco.TransID{
+		eco.Bike,
+		eco.Tramway,
+		eco.Train,
+		eco.Bus,
+		eco.Passenger,
+		eco.Car,
+		eco.Plane,
+	}
+
+	fmt.Fprintf(o, "<h3>Transport</h3>\n")
+	fmt.Fprintf(o, "\n<pre>\n")
+	for _, k := range tids {
+		v := stats.TransIDs[k]
+		fmt.Fprintf(o, "%-10s %4d\n", k, v)
+	}
+	fmt.Fprintf(o, "\n</pre>\n")
+
+	fmt.Fprintf(o, "<h3>Distances</h3>\n")
+	fmt.Fprintf(o, "\n<pre>\n")
+	for _, k := range tids {
+		v := stats.Dists[k]
+		fmt.Fprintf(o, "%-10s %6d km\n", k, v)
+	}
+	fmt.Fprintf(o, "\n</pre>\n")
+
+	return o.String(), nil
+}
+
+const rootPage = `
+<html>
+        <head>
+                <title>ecoLPC</title>
+                <style>
+                </style>
+        </head>
+
+        <body>
+                <div id="header">
+                        <h2>CO2 Evolution</h2>
+                </div>
+				<div id="stats">
+					{{.Stats}}
+				</div>
+                <div id="content">
+					<img id="co2-plot" src="/plot/co2" alt="N/A"></img>
+                </div>
+        </body>
+</html>
+
+`
+
+var rootTmpl = template.Must(template.New("eco-LPC").Parse(rootPage))

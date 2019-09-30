@@ -33,6 +33,7 @@ func main() {
 	http.HandleFunc("/api/last-id", srv.apiLastID)
 	http.HandleFunc("/api/stats", srv.apiStats)
 	http.HandleFunc("/api/update-db", srv.apiUpdateDB)
+	http.HandleFunc("/plot/co2", srv.plotCO2)
 
 	log.Fatalf("error serving eco-srv: %+v", http.ListenAndServe(*addrFlag, nil))
 }
