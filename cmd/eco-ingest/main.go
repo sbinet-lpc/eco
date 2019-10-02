@@ -34,7 +34,8 @@ var (
 
 	addrFlag = flag.String("addr", ":8080", "address to eco-srv")
 	idFlag   = flag.Int("id", 0, "enable verbose mode for a specific mission ID")
-	dbgFlag  = flag.Bool("dbg", false, "enable verbose mode")
+	dbgFlag  = flag.Bool("v", false, "enable verbose mode")
+	dryFlag  = flag.Bool("dry", false, "enable dry mode (do not commit to eco-DB)")
 
 	fixupsTIDFlag  = flag.String("fixups-tid", "fixups.tid.json", "path to transport IDs fixups")
 	fixupsDestFlag = flag.String("fixups-dest", "fixups.dest.json", "path to destination fixups")
@@ -181,6 +182,11 @@ func main() {
 		}
 
 		proc.Process(m)
+	}
+
+	if *dryFlag {
+		log.Printf("dry mode enabled: no upload to %q eco-srv", *addrFlag)
+		return
 	}
 
 	err = proc.upload(*addrFlag)
