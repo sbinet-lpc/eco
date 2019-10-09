@@ -153,7 +153,7 @@ func (srv *server) apiStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stats := eco.NewStats()
+	summ := eco.NewSummary()
 	err := srv.db.View(func(tx *bbolt.Tx) error {
 		bkt := tx.Bucket(bucketEco)
 		if bkt == nil {
@@ -166,7 +166,7 @@ func (srv *server) apiStats(w http.ResponseWriter, r *http.Request) {
 				return xerrors.Errorf("could not unmarshal mission: %w", err)
 			}
 
-			stats.Add(m)
+			summ.Add(m)
 
 			return nil
 		})
@@ -184,7 +184,7 @@ func (srv *server) apiStats(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	err = json.NewEncoder(w).Encode(stats)
+	err = json.NewEncoder(w).Encode(summ)
 	if err != nil {
 		log.Printf("could not encode last-mission ID: %+v", err)
 		http.Error(
@@ -265,7 +265,7 @@ func (srv *server) stats() (string, error) {
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
 
-	stats := eco.NewStats()
+	summ := eco.NewSummary()
 	err := srv.db.View(func(tx *bbolt.Tx) error {
 		bkt := tx.Bucket(bucketEco)
 		if bkt == nil {
@@ -278,7 +278,7 @@ func (srv *server) stats() (string, error) {
 				return xerrors.Errorf("could not unmarshal mission: %w", err)
 			}
 
-			stats.Add(m)
+			summ.Add(m)
 
 			return nil
 		})
@@ -290,10 +290,12 @@ func (srv *server) stats() (string, error) {
 	o := new(strings.Builder)
 	fmt.Fprintf(o, "\n<h3>Stats</h3>\n")
 	fmt.Fprintf(o, "\n<pre>\n")
-	fmt.Fprintf(o, "missions:    %d\n", stats.Missions)
+	fmt.Fprintf(o, "missions:    %4d (executed)\n", summ.Executed.N)
+	fmt.Fprintf(o, "missions:    %4d (planned)\n", summ.Planned.N)
+	fmt.Fprintf(o, "missions:    %4d (all)\n", summ.All.N)
 	fmt.Fprintf(o, "time period: %v -> %s\n",
-		stats.Start.Format("2006-01-02"),
-		stats.Stop.Format("2006-01-02"),
+		summ.Start.Format("2006-01-02"),
+		summ.Stop.Format("2006-01-02"),
 	)
 	fmt.Fprintf(o, "\n</pre>\n")
 
@@ -318,13 +320,13 @@ func (srv *server) stats() (string, error) {
 	//		return vs
 	//	}
 	//
-	//	cities := sort(stats.Cities)
+	//	cities := sort(summ.Cities)
 	//	fmt.Fprintf(o, "=== cities ===\n")
 	//	for _, v := range cities {
 	//		fmt.Fprintf(o, "%-10s %d\n", v.name, v.count)
 	//	}
 	//
-	//	countries := sort(stats.Countries)
+	//	countries := sort(summ.Countries)
 	//	fmt.Fprintf(o, "=== countries ===\n")
 	//	for _, v := range countries {
 	//		fmt.Fprintf(o, "%-10s %d\n", v.name, v.count)
@@ -340,19 +342,23 @@ func (srv *server) stats() (string, error) {
 		eco.Plane,
 	}
 
-	fmt.Fprintf(o, "<h3>Transport</h3>\n")
+	fmt.Fprintf(o, "<h3>Transport (executed, planned, all)</h3>\n")
 	fmt.Fprintf(o, "\n<pre>\n")
 	for _, k := range tids {
-		v := stats.TransIDs[k]
-		fmt.Fprintf(o, "%-10s %4d\n", k, v)
+		v1 := summ.Executed.TransIDs[k]
+		v2 := summ.Planned.TransIDs[k]
+		v3 := summ.All.TransIDs[k]
+		fmt.Fprintf(o, "%-10s %5d %5d %5d\n", k, v1, v2, v3)
 	}
 	fmt.Fprintf(o, "\n</pre>\n")
 
-	fmt.Fprintf(o, "<h3>Distances</h3>\n")
+	fmt.Fprintf(o, "<h3>Distances (executed, planned, all)</h3>\n")
 	fmt.Fprintf(o, "\n<pre>\n")
 	for _, k := range tids {
-		v := stats.Dists[k]
-		fmt.Fprintf(o, "%-10s %6d km\n", k, v)
+		v1 := summ.Executed.Dists[k]
+		v2 := summ.Planned.Dists[k]
+		v3 := summ.All.Dists[k]
+		fmt.Fprintf(o, "%-10s %8d km %8d km %8d km\n", k, v1, v2, v3)
 	}
 	fmt.Fprintf(o, "\n</pre>\n")
 

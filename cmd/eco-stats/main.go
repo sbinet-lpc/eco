@@ -41,16 +41,18 @@ func main() {
 	}
 	defer req.Body.Close()
 
-	var stats eco.Stats
-	err = json.NewDecoder(req.Body).Decode(&stats)
+	var summ eco.Summary
+	err = json.NewDecoder(req.Body).Decode(&summ)
 	if err != nil {
 		log.Fatalf("could not decode JSON stats: %+v", err)
 	}
 
-	log.Printf("missions:    %d", stats.Missions)
+	log.Printf("missions:    %4d (executed)", summ.Executed.N)
+	log.Printf("missions:    %4d (planned)", summ.Planned.N)
+	log.Printf("missions:    %4d (all)", summ.All.N)
 	log.Printf("time period: %v -> %s",
-		stats.Start.Format("2006-01-02"),
-		stats.Stop.Format("2006-01-02"),
+		summ.Start.Format("2006-01-02"),
+		summ.Stop.Format("2006-01-02"),
 	)
 
 	type entry struct {
@@ -74,7 +76,7 @@ func main() {
 		return vs
 	}
 
-	cities := sort(stats.Cities)
+	cities := sort(summ.Cities)
 	if *citiesFlag {
 		log.Printf("=== cities ===")
 		for _, v := range cities {
@@ -83,7 +85,7 @@ func main() {
 	}
 
 	if *countriesFlag {
-		countries := sort(stats.Countries)
+		countries := sort(summ.Countries)
 		log.Printf("=== countries ===")
 		for _, v := range countries {
 			log.Printf("%-10s %d", v.name, v.count)
@@ -92,13 +94,17 @@ func main() {
 
 	log.Printf("=== transport ===")
 	for _, k := range eco.TransIDs {
-		v := stats.TransIDs[k]
-		log.Printf("%-10s %d", k, v)
+		v1 := summ.Executed.TransIDs[k]
+		v2 := summ.Planned.TransIDs[k]
+		v3 := summ.All.TransIDs[k]
+		log.Printf("%-10s %5d %5d %5d\n", k, v1, v2, v3)
 	}
 
 	log.Printf("=== distances ===")
 	for _, k := range eco.TransIDs {
-		v := stats.Dists[k]
-		log.Printf("%-10s %d km", k, v)
+		v1 := summ.Executed.Dists[k]
+		v2 := summ.Planned.Dists[k]
+		v3 := summ.All.Dists[k]
+		log.Printf("%-10s %8d km %8d km %8d km\n", k, v1, v2, v3)
 	}
 }

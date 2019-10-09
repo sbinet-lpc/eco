@@ -25,7 +25,7 @@ type processor struct {
 	osm      *osm.Client
 	fixups   map[int32][]string // mission-id -> cleaned-up destination triplet
 	missions []eco.Mission
-	stats    *eco.Stats
+	stats    *eco.Summary
 }
 
 func newProcessor(name string) (*processor, error) {
@@ -57,7 +57,7 @@ func newProcessor(name string) (*processor, error) {
 			AddressDetails:  true,
 		},
 		fixups: db,
-		stats:  eco.NewStats(),
+		stats:  eco.NewSummary(),
 	}, nil
 }
 
