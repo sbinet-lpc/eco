@@ -25,7 +25,7 @@ type processor struct {
 	osm      *osm.Client
 	fixups   map[int32][]string // mission-id -> cleaned-up destination triplet
 	missions []eco.Mission
-	stats    *eco.Summary
+	summ     *eco.Summary
 }
 
 func newProcessor(name string) (*processor, error) {
@@ -57,7 +57,7 @@ func newProcessor(name string) (*processor, error) {
 			AddressDetails:  true,
 		},
 		fixups: db,
-		stats:  eco.NewSummary(),
+		summ:   eco.NewSummary(),
 	}, nil
 }
 
@@ -125,7 +125,7 @@ func (proc *processor) Process(raw Mission) {
 	log.Printf("%v", m)
 
 	proc.missions = append(proc.missions, m)
-	proc.stats.Add(m)
+	proc.summ.Add(m)
 }
 
 func (proc *processor) dest(m Mission) []string {
