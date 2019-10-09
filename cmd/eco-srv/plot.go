@@ -75,13 +75,6 @@ func (srv *server) plotCO2(w http.ResponseWriter, r *http.Request) {
 
 func makeTIDPlot(tid eco.TransID, ms []eco.Mission) *hplot.Plot {
 	p := hplot.New()
-	p.Title.Text = fmt.Sprintf("Transport -- %s", tid)
-	p.Y.Label.Text = "Cumulative distance [km]"
-
-	// xticks defines how we convert and display time.Time values.
-	xticks := plot.TimeTicks{Format: "2006-01-02"}
-	p.X.Tick.Marker = xticks
-
 	sort.Slice(ms, func(i, j int) bool {
 		mi := ms[i]
 		mj := ms[j]
@@ -105,14 +98,21 @@ func makeTIDPlot(tid eco.TransID, ms []eco.Mission) *hplot.Plot {
 		data = append(data, m)
 	}
 
+	total := 0.0
 	pts := make(plotter.XYs, len(data))
 	for i, m := range data {
+		total += m.Dist
 		pts[i].X = float64(m.Date.Unix())
-		pts[i].Y = m.Dist / 1000
+		pts[i].Y = total / 1000
 	}
-	for i := 1; i < len(pts); i++ {
-		pts[i].Y += pts[i-1].Y
-	}
+
+	cost := eco.CostOf(tid, total)
+	p.Title.Text = fmt.Sprintf("Transport -- %s: %3.2f tCO2e", tid, cost/1000)
+	p.Y.Label.Text = "Cumulative distance [km]"
+
+	// xticks defines how we convert and display time.Time values.
+	xticks := plot.TimeTicks{Format: "2006-01-02"}
+	p.X.Tick.Marker = xticks
 
 	line, err := hplot.NewLine(pts)
 	if err != nil {

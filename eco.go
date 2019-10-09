@@ -89,3 +89,23 @@ func CostLess(a, b TransID) bool {
 	}
 	return false
 }
+
+// CostOf returns the equivalent CO2 emission of a given distance (in meters),
+// for a given transportation mode.
+//
+// Factors extracted from:
+//  - https://docs.google.com/spreadsheets/d/1WVemrYvkBv3hD_AbIOteL5uRa5cqfBWh/edit#gid=392963105
+func CostOf(tid TransID, dist float64) float64 {
+	dist = dist / 1000
+	fact := map[TransID]float64{
+		Bike:      0,
+		Tramway:   0.006,
+		Train:     3.69e-3,
+		Bus:       0.182,
+		Passenger: 0,
+		Car:       0.259, // assume non-diesel cars
+		Plane:     0.51,  // assume long distance flights
+	}[tid]
+
+	return dist * fact
+}
