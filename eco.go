@@ -104,7 +104,7 @@ func CostOf(tid TransID, dist float64) float64 {
 		Bus:       0.182,
 		Passenger: 0,
 		Car:       0.259, // assume non-diesel cars
-		Plane:     0.51,  // assume long distance flights
+		Plane:     0.21,  // assume long distance flights (eco-class)
 	}[tid]
 
 	return dist * fact
