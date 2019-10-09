@@ -115,7 +115,7 @@ func makeTIDPlot(tid eco.TransID, ms []eco.Mission) *hplot.Plot {
 	}
 
 	cost := eco.CostOf(tid, total)
-	p.Title.Text = fmt.Sprintf("Transport -- %s: %3.2f tCO2e", tid, cost/1000)
+	p.Title.Text = fmt.Sprintf("Transport — %s\n%3.2f tCO2e", tid, cost/1000)
 	p.Y.Label.Text = "Cumulative distance [km]"
 
 	// xticks defines how we convert and display time.Time values.
@@ -128,7 +128,7 @@ func makeTIDPlot(tid eco.TransID, ms []eco.Mission) *hplot.Plot {
 	if err != nil {
 		panic(xerrors.Errorf("could not create line plot for %v: %w", tid, err))
 	}
-	line.StepStyle = plotter.MidStep
+	line.StepStyle = plotter.PreStep
 	line.LineStyle.Color = color.RGBA{0, 0, 255, 255}
 
 	p.Add(line)
