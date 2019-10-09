@@ -74,6 +74,12 @@ func (srv *server) plotCO2(w http.ResponseWriter, r *http.Request) {
 }
 
 func makeTIDPlot(tid eco.TransID, ms []eco.Mission) *hplot.Plot {
+	var (
+		now  = time.Now().UTC()
+		xmin = ms[0].Date
+		xmax = now
+	)
+
 	p := hplot.New()
 	sort.Slice(ms, func(i, j int) bool {
 		mi := ms[i]
@@ -87,8 +93,10 @@ func makeTIDPlot(tid eco.TransID, ms []eco.Mission) *hplot.Plot {
 	})
 
 	data := make([]eco.Mission, 0, len(ms))
-	now := time.Now().UTC()
 	for _, m := range ms {
+		if m.Date.Before(xmin) {
+			xmin = m.Date
+		}
 		if m.Trans != tid {
 			continue
 		}
@@ -113,6 +121,8 @@ func makeTIDPlot(tid eco.TransID, ms []eco.Mission) *hplot.Plot {
 	// xticks defines how we convert and display time.Time values.
 	xticks := plot.TimeTicks{Format: "2006-01-02"}
 	p.X.Tick.Marker = xticks
+	p.X.Min = float64(xmin.Unix())
+	p.X.Max = float64(xmax.Unix())
 
 	line, err := hplot.NewLine(pts)
 	if err != nil {
