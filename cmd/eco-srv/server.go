@@ -21,14 +21,16 @@ import (
 )
 
 var (
-	bucketEco = []byte("eco")
-	bucketOSM = []byte("osm")
+	bucketUpdate = []byte("last-update")
+	bucketEco    = []byte("eco")
+	bucketOSM    = []byte("osm")
 )
 
 type server struct {
-	mu  sync.RWMutex
-	db  *bbolt.DB
-	mid int32 // last mission id
+	mu   sync.RWMutex
+	db   *bbolt.DB
+	mid  int32     // last mission id
+	last time.Time // last updated
 }
 
 func newServer(name string) (*server, error) {
@@ -37,7 +39,7 @@ func newServer(name string) (*server, error) {
 		return nil, xerrors.Errorf("could not open eco db: %w", err)
 	}
 
-	srv := &server{db: db}
+	srv := &server{db: db, last: time.Now().UTC()}
 	err = srv.init()
 	if err != nil {
 		return nil, xerrors.Errorf("could not initialize eco server: %w", err)
@@ -48,6 +50,14 @@ func newServer(name string) (*server, error) {
 
 func (srv *server) init() error {
 	err := srv.db.Update(func(tx *bbolt.Tx) error {
+		upd, err := tx.CreateBucketIfNotExists(bucketUpdate)
+		if err != nil {
+			return xerrors.Errorf("could not create %q bucket: %w", bucketUpdate, err)
+		}
+		if upd == nil {
+			return xerrors.Errorf("could not create %q bucket", bucketUpdate)
+		}
+
 		eco, err := tx.CreateBucketIfNotExists(bucketEco)
 		if err != nil {
 			return xerrors.Errorf("could not create %q bucket: %w", bucketEco, err)
@@ -87,6 +97,22 @@ func (srv *server) init() error {
 		return xerrors.Errorf("could not find last mission id: %w", err)
 	}
 
+	err = srv.db.View(func(tx *bbolt.Tx) error {
+		bkt := tx.Bucket(bucketUpdate)
+		if bkt == nil {
+			return xerrors.Errorf("could not find %q bucket", bucketUpdate)
+		}
+		raw := bkt.Get(bucketUpdate)
+		if raw == nil {
+			return nil
+		}
+
+		return srv.last.UnmarshalBinary(raw)
+	})
+	if err != nil {
+		return xerrors.Errorf("could not find last-update: %w", err)
+	}
+
 	return nil
 }
 
@@ -107,9 +133,13 @@ func (srv *server) rootHandle(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	srv.mu.RLock()
+	last := srv.last.Format("2006-01-02 15:04:05")
+	srv.mu.RUnlock()
 
 	err = rootTmpl.Execute(w, map[string]interface{}{
-		"Stats": stats,
+		"Stats":   stats,
+		"Updated": last,
 	})
 	if err != nil {
 		err = xerrors.Errorf("could not execute html template: %w", err)
@@ -255,6 +285,21 @@ func (srv *server) apiUpdateDB(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	srv.last = time.Now().UTC()
+	err = srv.db.Update(func(tx *bbolt.Tx) error {
+		bkt := tx.Bucket(bucketUpdate)
+		if bkt == nil {
+			return xerrors.Errorf("could not access %q bucket", bucketUpdate)
+		}
+
+		raw, err := srv.last.MarshalBinary()
+		if err != nil {
+			return xerrors.Errorf("could not marshal last-update: %w", err)
+		}
+
+		return bkt.Put(bucketUpdate, raw)
+	})
+
 	log.Printf("updated eco db with %d missions (%d -> %d)", len(ms),
 		ms[0].ID,
 		ms[len(ms)-1].ID,
@@ -377,6 +422,7 @@ const rootPage = `
                 <div id="header">
                         <h2>CO2 Evolution</h2>
                 </div>
+				<pre>Last Updated: {{.Updated}} (UTC)</pre>
 				<div id="stats">
 					{{.Stats}}
 				</div>
