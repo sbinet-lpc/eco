@@ -470,7 +470,7 @@ func getLastID(addr string) (int32, error) {
 func fixupTID(m Mission) eco.TransID {
 	tid, ok := fixupTIDs[m.ID]
 	if !ok {
-		panic(xerrors.Errorf("invalid mission-id=%d, comment=%q", m.ID, m.Comment))
+		panic(xerrors.Errorf("invalid mission-id=%d, (tid=%d|%v) comment=%q", m.ID, m.Transport.ID, m.Transport.Label, m.Comment))
 	}
 	return tid
 }
