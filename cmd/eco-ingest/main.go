@@ -85,6 +85,7 @@ func main() {
 	var (
 		invalid  int64
 		missions = make(map[int32][]Mission)
+		allgood  = true
 	)
 	for rows.Next() {
 		if rows.Err() != nil {
@@ -129,7 +130,17 @@ func main() {
 			continue
 		}
 
-		mm := m.ToMission()
+		mm, ok := m.ToMission()
+		if !ok {
+			allgood = false
+			invalid++
+			log.Printf(
+				"INVALID mission: id=%d, org=%q, grp=%q mission:%q transport:%d|%s valid=%d comment=%q",
+				m.ID, m.Org, m.Group, m.Destination, m.Transport.ID, m.Transport.Label,
+				m.Valid, m.Comment,
+			)
+			continue
+		}
 
 		if !mm.isValid() {
 			invalid++
@@ -144,6 +155,9 @@ func main() {
 	}
 	log.Printf("missions:   %d", len(missions))
 	log.Printf("invalid:    %d", invalid)
+	if !allgood {
+		log.Fatalf("could not handle at least one mission. check TIDs")
+	}
 
 	dups := 0
 	mids := make([]int32, 0, len(missions))
@@ -232,7 +246,7 @@ type RawMission struct {
 	Housing sql.RawBytes
 }
 
-func (raw RawMission) ToMission() Mission {
+func (raw RawMission) ToMission() (Mission, bool) {
 	date, err := time.Parse(timefmtMission, string(raw.Date))
 	if err != nil {
 		panic(err)
@@ -265,8 +279,11 @@ func (raw RawMission) ToMission() Mission {
 		out.Residence.Return = raw.Residence.Return.Int64
 	}
 
-	_ = out.TransID() // make sure we catch all transport-id massaging...
-	return out
+	if ok := out.checkTID(); !ok {
+		return Mission{}, ok
+	}
+
+	return out, true
 }
 
 type Mission struct {
@@ -335,6 +352,16 @@ func (m Mission) TransID() eco.TransID {
 	}
 
 	return id
+}
+
+func (m Mission) checkTID() bool {
+	switch tid := m.Transport.ID; tid {
+	default:
+		return true
+	case idAutres:
+		_, ok := fixupTIDs[m.ID]
+		return ok
+	}
 }
 
 func chooseMission(ms []Mission) Mission {
