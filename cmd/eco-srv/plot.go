@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/sbinet-lpc/eco"
@@ -115,7 +116,7 @@ func makeTIDPlot(tid eco.TransID, ms []eco.Mission) *hplot.Plot {
 	}
 
 	cost := eco.CostOf(tid, total)
-	p.Title.Text = fmt.Sprintf("Transport — %s\n%3.2f tCO2e", tid, cost/1000)
+	p.Title.Text = fmt.Sprintf("%s: %3.2f tCO2e", strings.Title(tid.String()), cost/1000)
 	p.Y.Label.Text = "Cumulative distance [km]"
 
 	// xticks defines how we convert and display time.Time values.
