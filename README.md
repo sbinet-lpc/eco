@@ -39,3 +39,38 @@ eco-stats: plane      722748 km
 ## References
 
 - https://docs.google.com/spreadsheets/d/1WVemrYvkBv3hD_AbIOteL5uRa5cqfBWh/edit#gid=392963105
+
+## Example
+
+```
+# CO2 Evolution
+
+Last Updated: 2019-10-18 08:06:05 (UTC)
+Stats
+missions:     591 (executed)
+missions:      57 (planned)
+missions:     648 (all)
+time period: 2018-10-02 -> 2019-10-18
+
+## Transport (executed, planned, all)
+
+bike           0     0     0
+tramway        3     0     3
+train        123     8   131
+bus            6     0     6
+passenger     10     0    10
+car          367    34   401
+plane         82    15    97
+
+## Distances (executed, planned, all)
+
+bike              0 km        0 km        0 km
+tramway          15 km        0 km       15 km
+train         81093 km     5844 km    86937 km
+bus            1685 km        0 km     1685 km
+passenger      2981 km        0 km     2981 km
+car          148395 km    16149 km   164544 km
+plane        638511 km   159958 km   798469 km
+```
+
+![co2](https://github.com/sbinet-lpc/eco/raw/master/testdata/co2.png)
