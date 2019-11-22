@@ -135,9 +135,11 @@ func main() {
 			allgood = false
 			invalid++
 			log.Printf(
-				"INVALID mission: id=%d, org=%q, grp=%q mission:%q transport:%d|%s valid=%d comment=%q",
+				"INVALID mission: id=%d, org=%q, grp=%q mission:%q transport:%d|%s valid=%d comment=%q (date=%v -> %v)",
 				m.ID, m.Org, m.Group, m.Destination, m.Transport.ID, m.Transport.Label,
 				m.Valid, m.Comment,
+				string(m.Outbound.Date),
+				string(m.Inbound.Date),
 			)
 			continue
 		}
