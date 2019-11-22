@@ -21,7 +21,7 @@ func main() {
 	log.SetFlags(0)
 
 	var (
-		addrFlag      = flag.String("addr", ":8080", "[host]:port address of eco-srv")
+		addrFlag      = flag.String("addr", ":80", "[host]:port address of eco-srv")
 		citiesFlag    = flag.Bool("cities", false, "display cities stats")
 		countriesFlag = flag.Bool("countries", false, "display countries stats")
 	)

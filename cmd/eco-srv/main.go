@@ -15,7 +15,7 @@ func main() {
 	log.SetFlags(0)
 
 	var (
-		addrFlag = flag.String("addr", ":8080", "[host]:port to serve")
+		addrFlag = flag.String("addr", ":80", "[host]:port to serve")
 		dbFlag   = flag.String("db", "eco.db", "path to lpc-eco database")
 	)
 

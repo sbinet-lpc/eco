@@ -32,7 +32,7 @@ const (
 var (
 	clermont = geo.Point{Lat: 45.7774551, Lng: 3.0819427}
 
-	addrFlag = flag.String("addr", ":8080", "address to eco-srv")
+	addrFlag = flag.String("addr", ":80", "address to eco-srv")
 	idFlag   = flag.Int("id", 0, "enable verbose mode for a specific mission ID")
 	dbgFlag  = flag.Bool("v", false, "enable verbose mode")
 	dryFlag  = flag.Bool("dry", false, "enable dry mode (do not commit to eco-DB)")

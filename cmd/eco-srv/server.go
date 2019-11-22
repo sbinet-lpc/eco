@@ -429,6 +429,11 @@ const rootPage = `
                 <div id="content">
 					<img id="co2-plot" src="/plot/co2" alt="N/A"></img>
                 </div>
+				<br>
+				<hr>
+				<div>
+					Source code is <a href="https://github.com/sbinet-lpc/eco">there</a>.
+				</div>
         </body>
 </html>
 
