@@ -8,8 +8,10 @@ package main
 import (
 	"flag"
 	"log"
+	"strconv"
 	"strings"
 
+	"github.com/sbinet-lpc/eco/geo"
 	"github.com/sbinet-lpc/eco/osm"
 )
 
@@ -46,7 +48,18 @@ func main() {
 		log.Fatalf("could not find any location w/ %q", query)
 	}
 
-	log.Printf("main location: %v, %v", places[0].Lat, places[0].Lng)
+	clermont := geo.Point{Lat: 45.7774551, Lng: 3.0819427}
+	lat, err := strconv.ParseFloat(places[0].Lat, 64)
+	if err != nil {
+		log.Fatalf("could not parse latitude: %+v", err)
+	}
+	lng, err := strconv.ParseFloat(places[0].Lng, 64)
+	if err != nil {
+		log.Fatalf("could not parse longitude: %+v", err)
+	}
+
+	dist := 2 * geo.Haversine(geo.Point{Lat: lat, Lng: lng}, clermont) / 1000
+	log.Printf("main location: %v, %v -> %vkm", places[0].Lat, places[0].Lng, dist)
 
 	for i, place := range places {
 		log.Printf("loc[%d]: %#v", i, place)
