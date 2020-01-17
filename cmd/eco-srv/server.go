@@ -407,6 +407,16 @@ func (srv *server) stats() (string, error) {
 	}
 	fmt.Fprintf(o, "\n</pre>\n")
 
+	fmt.Fprintf(o, "<h3>Summary (multiplicity, distance, CO2e -- only for executed)</h3>\n")
+	fmt.Fprintf(o, "\n<pre>\n")
+	for _, k := range tids {
+		n := summ.Executed.TransIDs[k]
+		dist := summ.Executed.Dists[k]
+		co2 := eco.CostOf(k, float64(dist))
+		fmt.Fprintf(o, "%-10s %8d %8d km %8.2f tCO2\n", k, n, dist, co2)
+	}
+	fmt.Fprintf(o, "\n</pre>\n")
+
 	return o.String(), nil
 }
 
