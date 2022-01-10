@@ -197,7 +197,12 @@ func main() {
 			)
 		}
 
-		proc.Process(m)
+		err := proc.Process(m)
+		if err != nil {
+			log.Printf("could not process id=%d: %+v", id, err)
+			allgood = false
+			break
+		}
 	}
 
 	if *dryFlag {
@@ -208,6 +213,10 @@ func main() {
 	err = proc.upload(*addrFlag)
 	if err != nil {
 		log.Fatalf("could not upload new missions: %+v", err)
+	}
+
+	if !allgood {
+		log.Fatalf("an error occurred during processing")
 	}
 }
 

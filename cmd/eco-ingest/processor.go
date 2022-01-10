@@ -61,9 +61,9 @@ func newProcessor(name string) (*processor, error) {
 	}, nil
 }
 
-func (proc *processor) Process(raw Mission) {
+func (proc *processor) Process(raw Mission) error {
 	if !raw.isValid() {
-		return
+		return nil
 	}
 
 	toks := proc.dest(raw)
@@ -80,11 +80,11 @@ func (proc *processor) Process(raw Mission) {
 	locs, err := proc.osm.Search(query)
 	if err != nil {
 		log.Printf("mission=%d destination=%s", raw.ID, raw.Destination)
-		log.Fatalf("could not find destination for %q: %+v", query, err)
+		return fmt.Errorf("could not find destination for %q: %w", query, err)
 	}
 	if len(locs) == 0 {
 		log.Printf("mission=%d destination=%s", raw.ID, raw.Destination)
-		log.Fatalf("could not find destination for %q", query)
+		return fmt.Errorf("could not find destination for %q", query)
 	}
 	if *dbgFlag {
 		log.Printf("dest: %#v", locs)
@@ -93,11 +93,11 @@ func (proc *processor) Process(raw Mission) {
 	loc := locs[0]
 	lat, err := strconv.ParseFloat(loc.Lat, 64)
 	if err != nil {
-		log.Fatalf("could not parse lattitude: %+v", err)
+		return fmt.Errorf("could not parse lattitude: %w", err)
 	}
 	lng, err := strconv.ParseFloat(loc.Lng, 64)
 	if err != nil {
-		log.Fatalf("could not parse longitude: %+v", err)
+		return fmt.Errorf("could not parse longitude: %w", err)
 	}
 
 	m := eco.Mission{
@@ -126,6 +126,8 @@ func (proc *processor) Process(raw Mission) {
 
 	proc.missions = append(proc.missions, m)
 	proc.summ.Add(m)
+
+	return nil
 }
 
 func (proc *processor) dest(m Mission) []string {
