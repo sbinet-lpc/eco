@@ -8,7 +8,7 @@ require (
 	github.com/jung-kurt/gofpdf v1.16.2 // indirect
 	go-hep.org/x/hep v0.22.0
 	go.etcd.io/bbolt v1.3.3
-	golang.org/x/image v0.0.0-20191214001246-9130b4cfad52 // indirect
+	golang.org/x/image v0.5.0 // indirect
 	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
 	gonum.org/v1/gonum v0.6.2 // indirect
 	gonum.org/v1/plot v0.0.0-20200111075622-4abb28f724d5
