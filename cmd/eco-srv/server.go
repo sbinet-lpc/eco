@@ -280,7 +280,7 @@ func (srv *server) apiUpdateDB(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		err = xerrors.Errorf("could not update eco db buckets: %w", err)
-		log.Printf("+v", err)
+		log.Printf("%+v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

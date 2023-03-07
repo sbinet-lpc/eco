@@ -46,7 +46,7 @@ func (srv *server) plotCO2(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		err = xerrors.Errorf("could not process missions: %w", err)
-		log.Printf("+v", err)
+		log.Printf("%+v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
