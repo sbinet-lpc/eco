@@ -18,7 +18,6 @@ import (
 	"github.com/sbinet-lpc/eco"
 	"github.com/sbinet-lpc/eco/geo"
 	"github.com/sbinet-lpc/eco/osm"
-	"golang.org/x/xerrors"
 )
 
 type processor struct {
@@ -31,7 +30,7 @@ type processor struct {
 func newProcessor(name string) (*processor, error) {
 	f, err := os.Open(name)
 	if err != nil {
-		return nil, xerrors.Errorf("could not open fixups file %q: %+v", name, err)
+		return nil, fmt.Errorf("could not open fixups file %q: %w", name, err)
 	}
 	defer f.Close()
 
@@ -42,7 +41,7 @@ func newProcessor(name string) (*processor, error) {
 	var raw []fixup
 	err = json.NewDecoder(f).Decode(&raw)
 	if err != nil {
-		return nil, xerrors.Errorf("could not decode fixups file %q: %+v", name, err)
+		return nil, fmt.Errorf("could not decode fixups file %q: %w", name, err)
 	}
 
 	db := make(map[int32][]string, len(raw))
@@ -146,22 +145,22 @@ func (proc *processor) upload(addr string) error {
 	body := new(bytes.Buffer)
 	err := json.NewEncoder(body).Encode(proc.missions)
 	if err != nil {
-		return xerrors.Errorf("could not encode missions to JSON: %w", err)
+		return fmt.Errorf("could not encode missions to JSON: %w", err)
 	}
 
 	req, err := http.NewRequest(http.MethodPost, url, body)
 	if err != nil {
-		return xerrors.Errorf("could not create POST request to eco-srv: %w", err)
+		return fmt.Errorf("could not create POST request to eco-srv: %w", err)
 	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return xerrors.Errorf("could not send POST request to eco-srv: %w", err)
+		return fmt.Errorf("could not send POST request to eco-srv: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return xerrors.Errorf("received an invalid status from eco-srv: %s (code=%d)",
+		return fmt.Errorf("received an invalid status from eco-srv: %s (code=%d)",
 			resp.Status, resp.StatusCode,
 		)
 	}

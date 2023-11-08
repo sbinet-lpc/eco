@@ -7,12 +7,11 @@ package osm // import "github.com/sbinet-lpc/eco/osm"
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
-
-	"golang.org/x/xerrors"
 )
 
 // Place describes a place location from Nominatim's OpenStreetMap database.
@@ -69,7 +68,7 @@ func (c *Client) Search(query string) ([]Place, error) {
 
 	req, err := http.NewRequest(http.MethodGet, apiSearch, nil)
 	if err != nil {
-		return nil, xerrors.Errorf("could not create HTTP request: %w", err)
+		return nil, fmt.Errorf("could not create HTTP request: %w", err)
 	}
 
 	req.Header.Set("User-Agent", c.UserAgent)
@@ -90,14 +89,14 @@ func (c *Client) Search(query string) ([]Place, error) {
 
 	resp, err := cli.Do(req)
 	if err != nil {
-		return nil, xerrors.Errorf("could not send request to OpenStreetMap: %w", err)
+		return nil, fmt.Errorf("could not send request to OpenStreetMap: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		out := new(bytes.Buffer)
 		io.Copy(out, resp.Body)
-		return nil, xerrors.Errorf(
+		return nil, fmt.Errorf(
 			"invalid status code %s (%d):\n%s",
 			resp.Status, resp.StatusCode, out.String(),
 		)
@@ -106,7 +105,7 @@ func (c *Client) Search(query string) ([]Place, error) {
 	var places []Place
 	err = json.NewDecoder(resp.Body).Decode(&places)
 	if err != nil {
-		return nil, xerrors.Errorf("could not decode JSON reply from %q: %w", req, err)
+		return nil, fmt.Errorf("could not decode JSON reply from %q: %w", req, err)
 	}
 
 	return places, nil

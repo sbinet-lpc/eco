@@ -9,8 +9,6 @@ package eco // import "github.com/sbinet-lpc/eco"
 import (
 	"fmt"
 	"time"
-
-	"golang.org/x/xerrors"
 )
 
 type Mission struct {
@@ -68,7 +66,7 @@ func (tid TransID) String() string {
 	case Bike:
 		return "bike"
 	}
-	panic(xerrors.Errorf("unknown transport ID %d", int(tid)))
+	panic(fmt.Errorf("unknown transport ID %d", int(tid)))
 }
 
 // List of all known TransIDs
@@ -94,7 +92,7 @@ func CostLess(a, b TransID) bool {
 // for a given transportation mode.
 //
 // Factors extracted from:
-//  - https://docs.google.com/spreadsheets/d/1WVemrYvkBv3hD_AbIOteL5uRa5cqfBWh/edit#gid=392963105
+//   - https://docs.google.com/spreadsheets/d/1WVemrYvkBv3hD_AbIOteL5uRa5cqfBWh/edit#gid=392963105
 func CostOf(tid TransID, dist float64) float64 {
 	dist = dist / 1000
 	fact := map[TransID]float64{

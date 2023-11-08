@@ -21,7 +21,6 @@ import (
 	"github.com/sbinet-lpc/eco"
 	"github.com/sbinet-lpc/eco/geo"
 	"github.com/sbinet-lpc/eco/osm"
-	"golang.org/x/xerrors"
 )
 
 const (
@@ -454,11 +453,11 @@ func (req OSMReq) LatLng() (float64, float64) {
 
 	lat, err := strconv.ParseFloat(loc.Lat, 64)
 	if err != nil {
-		panic(xerrors.Errorf("could not convert latitude: %w", err))
+		panic(fmt.Errorf("could not convert latitude: %w", err))
 	}
 	lng, err := strconv.ParseFloat(loc.Lng, 64)
 	if err != nil {
-		panic(xerrors.Errorf("could not convert longitude: %w", err))
+		panic(fmt.Errorf("could not convert longitude: %w", err))
 	}
 	return lat, lng
 }
@@ -467,13 +466,13 @@ func readCredentials() (cred, error) {
 	var v cred
 	f, err := os.Open("passwd")
 	if err != nil {
-		return v, xerrors.Errorf("could not open credentials file: %w", err)
+		return v, fmt.Errorf("could not open credentials file: %w", err)
 	}
 	defer f.Close()
 
 	err = json.NewDecoder(f).Decode(&v)
 	if err != nil {
-		return v, xerrors.Errorf("could not decode credentials file content: %w", err)
+		return v, fmt.Errorf("could not decode credentials file content: %w", err)
 	}
 
 	return v, nil
@@ -490,7 +489,7 @@ func getLastID(addr string) (int32, error) {
 	url := fmt.Sprintf("http://%s/api/last-id", addr)
 	resp, err := http.Get(url)
 	if err != nil {
-		return 0, xerrors.Errorf("could not GET last-id: %w", err)
+		return 0, fmt.Errorf("could not GET last-id: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -499,7 +498,7 @@ func getLastID(addr string) (int32, error) {
 	}
 	err = json.NewDecoder(resp.Body).Decode(&raw)
 	if err != nil {
-		return 0, xerrors.Errorf("could not decode last-id response: %w", err)
+		return 0, fmt.Errorf("could not decode last-id response: %w", err)
 	}
 
 	return raw.ID, nil
@@ -508,7 +507,7 @@ func getLastID(addr string) (int32, error) {
 func fixupTID(m Mission) eco.TransID {
 	tid, ok := fixupTIDs[m.ID]
 	if !ok {
-		panic(xerrors.Errorf("invalid mission-id=%d, (tid=%d|%v) comment=%q", m.ID, m.Transport.ID, m.Transport.Label, m.Comment))
+		panic(fmt.Errorf("invalid mission-id=%d, (tid=%d|%v) comment=%q", m.ID, m.Transport.ID, m.Transport.Label, m.Comment))
 	}
 	return tid
 }
@@ -516,7 +515,7 @@ func fixupTID(m Mission) eco.TransID {
 func loadTIDs(name string) (map[int32]eco.TransID, error) {
 	f, err := os.Open(name)
 	if err != nil {
-		return nil, xerrors.Errorf("could not open tid db file: %w", err)
+		return nil, fmt.Errorf("could not open tid db file: %w", err)
 	}
 	defer f.Close()
 
@@ -526,7 +525,7 @@ func loadTIDs(name string) (map[int32]eco.TransID, error) {
 	}
 	err = json.NewDecoder(f).Decode(&raw)
 	if err != nil {
-		return nil, xerrors.Errorf("could not decode tid db file: %w", err)
+		return nil, fmt.Errorf("could not decode tid db file: %w", err)
 	}
 
 	db := make(map[int32]eco.TransID, len(raw))
@@ -546,7 +545,7 @@ func loadTIDs(name string) (map[int32]eco.TransID, error) {
 	for _, v := range raw {
 		tid, ok := tids[v.TID]
 		if !ok {
-			return nil, xerrors.Errorf("could not find eco.TransID corresponding to %q", v.TID)
+			return nil, fmt.Errorf("could not find eco.TransID corresponding to %q", v.TID)
 		}
 		db[v.ID] = tid
 	}

@@ -6,7 +6,6 @@ require (
 	github.com/go-sql-driver/mysql v1.7.1
 	go-hep.org/x/hep v0.34.1
 	go.etcd.io/bbolt v1.3.8
-	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028
 	gonum.org/v1/plot v0.14.0
 )
 

@@ -17,7 +17,6 @@ import (
 
 	"github.com/sbinet-lpc/eco"
 	"go.etcd.io/bbolt"
-	"golang.org/x/xerrors"
 )
 
 var (
@@ -36,13 +35,13 @@ type server struct {
 func newServer(name string) (*server, error) {
 	db, err := bbolt.Open("eco.db", 0644, &bbolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
-		return nil, xerrors.Errorf("could not open eco db: %w", err)
+		return nil, fmt.Errorf("could not open eco db: %w", err)
 	}
 
 	srv := &server{db: db, last: time.Now().UTC()}
 	err = srv.init()
 	if err != nil {
-		return nil, xerrors.Errorf("could not initialize eco server: %w", err)
+		return nil, fmt.Errorf("could not initialize eco server: %w", err)
 	}
 
 	return srv, nil
@@ -52,38 +51,38 @@ func (srv *server) init() error {
 	err := srv.db.Update(func(tx *bbolt.Tx) error {
 		upd, err := tx.CreateBucketIfNotExists(bucketUpdate)
 		if err != nil {
-			return xerrors.Errorf("could not create %q bucket: %w", bucketUpdate, err)
+			return fmt.Errorf("could not create %q bucket: %w", bucketUpdate, err)
 		}
 		if upd == nil {
-			return xerrors.Errorf("could not create %q bucket", bucketUpdate)
+			return fmt.Errorf("could not create %q bucket", bucketUpdate)
 		}
 
 		eco, err := tx.CreateBucketIfNotExists(bucketEco)
 		if err != nil {
-			return xerrors.Errorf("could not create %q bucket: %w", bucketEco, err)
+			return fmt.Errorf("could not create %q bucket: %w", bucketEco, err)
 		}
 		if eco == nil {
-			return xerrors.Errorf("could not create %q bucket", bucketEco)
+			return fmt.Errorf("could not create %q bucket", bucketEco)
 		}
 
 		osm, err := tx.CreateBucketIfNotExists(bucketOSM)
 		if err != nil {
-			return xerrors.Errorf("could not create %q bucket: %w", bucketOSM, err)
+			return fmt.Errorf("could not create %q bucket: %w", bucketOSM, err)
 		}
 		if osm == nil {
-			return xerrors.Errorf("could not create %q bucket", bucketOSM)
+			return fmt.Errorf("could not create %q bucket", bucketOSM)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return xerrors.Errorf("could not setup eco db buckets: %w", err)
+		return fmt.Errorf("could not setup eco db buckets: %w", err)
 	}
 
 	err = srv.db.View(func(tx *bbolt.Tx) error {
 		bkt := tx.Bucket(bucketEco)
 		if bkt == nil {
-			return xerrors.Errorf("could not find %q bucket", bucketEco)
+			return fmt.Errorf("could not find %q bucket", bucketEco)
 		}
 		return bkt.ForEach(func(k, v []byte) error {
 			id := int32(binary.LittleEndian.Uint32(k))
@@ -94,13 +93,13 @@ func (srv *server) init() error {
 		})
 	})
 	if err != nil {
-		return xerrors.Errorf("could not find last mission id: %w", err)
+		return fmt.Errorf("could not find last mission id: %w", err)
 	}
 
 	err = srv.db.View(func(tx *bbolt.Tx) error {
 		bkt := tx.Bucket(bucketUpdate)
 		if bkt == nil {
-			return xerrors.Errorf("could not find %q bucket", bucketUpdate)
+			return fmt.Errorf("could not find %q bucket", bucketUpdate)
 		}
 		raw := bkt.Get(bucketUpdate)
 		if raw == nil {
@@ -110,7 +109,7 @@ func (srv *server) init() error {
 		return srv.last.UnmarshalBinary(raw)
 	})
 	if err != nil {
-		return xerrors.Errorf("could not find last-update: %w", err)
+		return fmt.Errorf("could not find last-update: %w", err)
 	}
 
 	return nil
@@ -119,7 +118,7 @@ func (srv *server) init() error {
 func (srv *server) Close() error {
 	err := srv.db.Close()
 	if err != nil {
-		return xerrors.Errorf("could not close eco db: %w", err)
+		return fmt.Errorf("could not close eco db: %w", err)
 	}
 
 	return nil
@@ -128,7 +127,7 @@ func (srv *server) Close() error {
 func (srv *server) rootHandle(w http.ResponseWriter, r *http.Request) {
 	stats, err := srv.stats()
 	if err != nil {
-		err = xerrors.Errorf("could not compute eco stats: %w", err)
+		err = fmt.Errorf("could not compute eco stats: %w", err)
 		log.Printf("%+v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -142,7 +141,7 @@ func (srv *server) rootHandle(w http.ResponseWriter, r *http.Request) {
 		"Updated": last,
 	})
 	if err != nil {
-		err = xerrors.Errorf("could not execute html template: %w", err)
+		err = fmt.Errorf("could not execute html template: %w", err)
 		log.Printf("%+v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -167,7 +166,7 @@ func (srv *server) apiLastID(w http.ResponseWriter, r *http.Request) {
 		log.Printf("could not encode last-mission ID: %+v", err)
 		http.Error(
 			w,
-			xerrors.Errorf("could not encode last-mission ID: %w", err).Error(),
+			fmt.Errorf("could not encode last-mission ID: %w", err).Error(),
 			http.StatusInternalServerError,
 		)
 		return
@@ -187,13 +186,13 @@ func (srv *server) apiStats(w http.ResponseWriter, r *http.Request) {
 	err := srv.db.View(func(tx *bbolt.Tx) error {
 		bkt := tx.Bucket(bucketEco)
 		if bkt == nil {
-			return xerrors.Errorf("could not find bucket %q", bucketEco)
+			return fmt.Errorf("could not find bucket %q", bucketEco)
 		}
 		return bkt.ForEach(func(k, v []byte) error {
 			var m eco.Mission
 			err := m.UnmarshalBinary(v)
 			if err != nil {
-				return xerrors.Errorf("could not unmarshal mission: %w", err)
+				return fmt.Errorf("could not unmarshal mission: %w", err)
 			}
 
 			summ.Add(m)
@@ -202,11 +201,11 @@ func (srv *server) apiStats(w http.ResponseWriter, r *http.Request) {
 		})
 	})
 	if err != nil {
-		err = xerrors.Errorf("could not process missions: %w", err)
+		err = fmt.Errorf("could not process missions: %w", err)
 		log.Printf("%+v", err)
 		http.Error(
 			w,
-			xerrors.Errorf("could not encode last-mission ID: %w", err).Error(),
+			fmt.Errorf("could not encode last-mission ID: %w", err).Error(),
 			http.StatusInternalServerError,
 		)
 		return
@@ -219,7 +218,7 @@ func (srv *server) apiStats(w http.ResponseWriter, r *http.Request) {
 		log.Printf("could not encode last-mission ID: %+v", err)
 		http.Error(
 			w,
-			xerrors.Errorf("could not encode last-mission ID: %w", err).Error(),
+			fmt.Errorf("could not encode last-mission ID: %w", err).Error(),
 			http.StatusInternalServerError,
 		)
 		return
@@ -256,7 +255,7 @@ func (srv *server) apiUpdateDB(w http.ResponseWriter, r *http.Request) {
 	err = srv.db.Update(func(tx *bbolt.Tx) error {
 		bkt := tx.Bucket(bucketEco)
 		if bkt == nil {
-			return xerrors.Errorf("could not access %q bucket", bucketEco)
+			return fmt.Errorf("could not access %q bucket", bucketEco)
 		}
 
 		id := make([]byte, 4)
@@ -264,12 +263,12 @@ func (srv *server) apiUpdateDB(w http.ResponseWriter, r *http.Request) {
 			binary.LittleEndian.PutUint32(id, uint32(m.ID))
 			buf, err := m.MarshalBinary()
 			if err != nil {
-				return xerrors.Errorf("could not marshal mission %v: %w", m, err)
+				return fmt.Errorf("could not marshal mission %v: %w", m, err)
 			}
 
 			err = bkt.Put(id, buf)
 			if err != nil {
-				return xerrors.Errorf("could not store mission %v: %w", m, err)
+				return fmt.Errorf("could not store mission %v: %w", m, err)
 			}
 			if m.ID > srv.mid {
 				srv.mid = m.ID
@@ -279,7 +278,7 @@ func (srv *server) apiUpdateDB(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		err = xerrors.Errorf("could not update eco db buckets: %w", err)
+		err = fmt.Errorf("could not update eco db buckets: %w", err)
 		log.Printf("%+v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -289,12 +288,12 @@ func (srv *server) apiUpdateDB(w http.ResponseWriter, r *http.Request) {
 	err = srv.db.Update(func(tx *bbolt.Tx) error {
 		bkt := tx.Bucket(bucketUpdate)
 		if bkt == nil {
-			return xerrors.Errorf("could not access %q bucket", bucketUpdate)
+			return fmt.Errorf("could not access %q bucket", bucketUpdate)
 		}
 
 		raw, err := srv.last.MarshalBinary()
 		if err != nil {
-			return xerrors.Errorf("could not marshal last-update: %w", err)
+			return fmt.Errorf("could not marshal last-update: %w", err)
 		}
 
 		return bkt.Put(bucketUpdate, raw)
@@ -314,13 +313,13 @@ func (srv *server) stats() (string, error) {
 	err := srv.db.View(func(tx *bbolt.Tx) error {
 		bkt := tx.Bucket(bucketEco)
 		if bkt == nil {
-			return xerrors.Errorf("could not find bucket %q", bucketEco)
+			return fmt.Errorf("could not find bucket %q", bucketEco)
 		}
 		return bkt.ForEach(func(k, v []byte) error {
 			var m eco.Mission
 			err := m.UnmarshalBinary(v)
 			if err != nil {
-				return xerrors.Errorf("could not unmarshal mission: %w", err)
+				return fmt.Errorf("could not unmarshal mission: %w", err)
 			}
 
 			summ.Add(m)
@@ -329,7 +328,7 @@ func (srv *server) stats() (string, error) {
 		})
 	})
 	if err != nil {
-		return "", xerrors.Errorf("could not process missions: %w", err)
+		return "", fmt.Errorf("could not process missions: %w", err)
 	}
 
 	o := new(strings.Builder)

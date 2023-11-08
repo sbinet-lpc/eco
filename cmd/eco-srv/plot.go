@@ -16,7 +16,6 @@ import (
 	"github.com/sbinet-lpc/eco"
 	"go-hep.org/x/hep/hplot"
 	"go.etcd.io/bbolt"
-	"golang.org/x/xerrors"
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/plotter"
 	"gonum.org/v1/plot/vg"
@@ -32,20 +31,20 @@ func (srv *server) plotCO2(w http.ResponseWriter, r *http.Request) {
 	err := srv.db.View(func(tx *bbolt.Tx) error {
 		bkt := tx.Bucket(bucketEco)
 		if bkt == nil {
-			return xerrors.Errorf("could not find bucket %q", bucketEco)
+			return fmt.Errorf("could not find bucket %q", bucketEco)
 		}
 		return bkt.ForEach(func(k, v []byte) error {
 			var m eco.Mission
 			err := m.UnmarshalBinary(v)
 			if err != nil {
-				return xerrors.Errorf("could not unmarshal mission: %w", err)
+				return fmt.Errorf("could not unmarshal mission: %w", err)
 			}
 			ms = append(ms, m)
 			return nil
 		})
 	})
 	if err != nil {
-		err = xerrors.Errorf("could not process missions: %w", err)
+		err = fmt.Errorf("could not process missions: %w", err)
 		log.Printf("%+v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -67,7 +66,7 @@ func (srv *server) plotCO2(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "image/png")
 	_, err = c.WriteTo(w)
 	if err != nil {
-		err = xerrors.Errorf("could not write PNG canvas: %w", err)
+		err = fmt.Errorf("could not write PNG canvas: %w", err)
 		log.Printf("%+v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -127,7 +126,7 @@ func makeTIDPlot(tid eco.TransID, ms []eco.Mission) *hplot.Plot {
 
 	line, err := hplot.NewLine(pts)
 	if err != nil {
-		panic(xerrors.Errorf("could not create line plot for %v: %w", tid, err))
+		panic(fmt.Errorf("could not create line plot for %v: %w", tid, err))
 	}
 	line.StepStyle = plotter.PreStep
 	line.LineStyle.Color = color.RGBA{0, 0, 255, 255}
